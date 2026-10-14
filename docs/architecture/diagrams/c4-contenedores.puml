@@ -1,0 +1,26 @@
+@startuml c4-contenedores
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Diagrama de contenedores (C4 Nivel 2) - CAMPORA
+
+Person(usuarios, "Usuarios", "Productor rural, comprador urbano, proveedor de insumos, administrador")
+
+System_Boundary(campora, "Sistema CAMPORA") {
+  Container(pwa, "PWA móvil y web", "JavaScript, HTML5, CSS3, Service Worker, IndexedDB", "Interfaz offline-first; guarda localmente y sincroniza al detectar red")
+  Container(gateway, "API Gateway / Ingress", "Node.js", "Autenticación JWT, WAF, rate limiting, enrutamiento")
+  Container(core, "Core Microservices", "Docker / PaaS", "Ofertas, pedidos, validación ICA, pagos y matching")
+  ContainerDb(pg, "PostgreSQL", "SQL", "Usuarios, órdenes y logs de auditoría")
+  ContainerDb(redis, "Redis", "RESP", "Caché de búsquedas y cola de eventos")
+}
+
+System_Ext(pagos, "Pasarelas de pago", "Wompi, Nequi, PSE")
+System_Ext(ica, "Regulador fitosanitario", "ICA / INVIMA")
+
+Rel(usuarios, pwa, "Usa", "HTTPS")
+Rel(pwa, gateway, "Consume", "HTTPS / JSON REST")
+Rel(gateway, core, "Enruta", "HTTP interno / gRPC")
+Rel(core, pg, "Lee y escribe", "SQL / TCP 5432")
+Rel(core, redis, "Caché y eventos", "RESP / TCP")
+Rel(core, pagos, "Cobra y recibe confirmaciones", "HTTPS / Webhooks")
+Rel(core, ica, "Verifica registro", "REST API")
+@enduml

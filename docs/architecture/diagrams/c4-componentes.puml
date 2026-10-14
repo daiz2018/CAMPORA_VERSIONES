@@ -1,0 +1,37 @@
+@startuml c4-componentes
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Diagrama de componentes (C4 Nivel 3) - Core Microservices
+
+Container(gateway, "API Gateway / Ingress", "Node.js", "Proxy HTTPS / REST")
+ContainerDb(pg, "PostgreSQL", "SQL", "Tablas, pedidos y audit logs")
+ContainerDb(redis, "Redis", "RESP", "Caché de búsquedas y cola de eventos")
+System_Ext(pagos, "Pasarelas de pago", "Wompi, Nequi, PSE")
+System_Ext(ica, "Regulador fitosanitario", "ICA / INVIMA")
+
+Container_Boundary(core, "Core Microservices") {
+  Component(auth, "AuthComponent", "Servicio", "Usuarios, perfiles y JWT")
+  Component(offer, "OfferComponent", "Servicio", "Gestión de ofertas y sincronización offline")
+  Component(matching, "MatchingEngine", "Servicio", "Motor de búsqueda y emparejamiento")
+  Component(order, "OrderManager", "Servicio", "Ciclo de órdenes y totales")
+  Component(icav, "ICAValidator", "Servicio", "Reglas fitosanitarias e insumos")
+  Component(payment, "PaymentAdapter", "Patrón Strategy", "Pagos y alertas")
+}
+
+Rel(gateway, auth, "IAuthService", "REST / JWT")
+Rel(gateway, order, "IOrderService", "REST")
+Rel(gateway, offer, "IOfferService", "REST / JSON")
+Rel(gateway, matching, "IMatchingService", "REST")
+Rel(order, offer, "Valida oferta y estado")
+Rel(order, payment, "IPaymentService: procesa pago")
+Rel(offer, matching, "Informa nuevas cosechas", "Evento")
+Rel(offer, icav, "IICAValidationService")
+Rel(auth, pg, "SQL")
+Rel(order, pg, "SQL")
+Rel(offer, pg, "SQL")
+Rel(icav, pg, "Audita catálogo de insumos", "SQL")
+Rel(matching, redis, "Caché de búsquedas")
+Rel(payment, pagos, "Cobros", "HTTPS")
+Rel(pagos, payment, "Confirmaciones", "Webhook")
+Rel(icav, ica, "Consulta registro", "REST")
+@enduml

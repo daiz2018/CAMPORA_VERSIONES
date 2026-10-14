@@ -1,0 +1,27 @@
+@startuml c4-contexto
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title Diagrama de contexto (C4 Nivel 1) - CAMPORA
+
+Person(productor, "Productor rural", "Publica cosechas y compra insumos, incluso sin conexión")
+Person(comprador, "Comprador urbano", "Busca ofertas y realiza pedidos")
+Person(proveedor, "Proveedor de insumos", "Publica y vende insumos agropecuarios regulados")
+Person(admin, "Administrador / Auditor", "Gestiona y supervisa la plataforma")
+
+System(campora, "Sistema CAMPORA", "Plataforma de conexión comercial campo-ciudad")
+
+System_Ext(pagos, "Pasarelas de pago", "Wompi, Nequi, PSE")
+System_Ext(ica, "Regulador fitosanitario", "ICA / INVIMA")
+System_Ext(logistica, "Logística y geolocalización", "Transportistas y rutas")
+System_Ext(notif, "Servicio de notificaciones", "SMS / WhatsApp API")
+
+Rel(productor, campora, "Publica cosechas / compra insumos", "HTTPS / PWA")
+Rel(comprador, campora, "Busca ofertas / realiza pedidos", "HTTPS")
+Rel(proveedor, campora, "Publica y vende insumos", "HTTPS")
+Rel(admin, campora, "Gestiona y supervisa", "HTTPS")
+
+Rel(campora, pagos, "Procesa pagos", "HTTPS / Webhooks")
+Rel(campora, ica, "Verifica registros", "REST API")
+Rel(campora, logistica, "Asigna fletes y rutas", "HTTPS / REST")
+Rel(campora, notif, "Envía alertas y confirmaciones", "HTTPS / REST")
+@enduml

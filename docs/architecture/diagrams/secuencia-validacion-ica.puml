@@ -1,0 +1,42 @@
+@startuml secuencia-validacion-ica
+title Validación ICA de insumos: alternativas del ADR-0005 (Propuesto)
+skinparam sequenceMessageAlign center
+
+actor "Proveedor" as PR
+participant "API Gateway" as GW
+participant "ICAValidator" as V
+queue "Event Bus (Redis)" as EB
+participant "Worker de validación" as W
+participant "Servicio ICA" as ICA
+database "PostgreSQL (audit log)" as PG
+
+alt Opción A: validación síncrona (Contrato 2 del C4)
+  PR -> GW : POST /api/v1/inputs/validate-ica
+  GW -> V : validateProductRegistration(code)
+  V -> ICA : Consulta registro
+  ICA --> V : Resultado
+  V -> PG : Registra intento en log inmutable
+  V --> GW : isValid / complianceLogId
+  GW --> PR : 200 OK o 422 ICA_REGISTRATION_INVALID
+else Opción B: validación asíncrona (Dossier, sección 6.2)
+  PR -> GW : Registrar insumo
+  GW -> V : Publica con estado EN_REVISION_NORMATIVA
+  V -> EB : Evento InsumoRegistrado
+  V --> PR : 202 Accepted
+  EB -> W : Consume evento
+  W -> ICA : Consulta registro
+  ICA --> W : Resultado
+  W -> PG : Registra intento en log inmutable
+  W --> PR : Notifica APROBADO o RECHAZADO
+else Opción C: híbrida (propuesta)
+  PR -> GW : Registrar insumo
+  GW -> V : Validación local de formato y categorías IA/IB
+  V --> GW : Rechazo inmediato (422) si es categoría prohibida
+  V -> EB : Evento para verificación contra ICA
+  V --> PR : 202 Accepted (EN_REVISION_NORMATIVA)
+  EB -> W : Consume evento
+  W -> ICA : Consulta registro
+  W -> PG : Registra intento en log inmutable
+  W --> PR : Notifica resultado final
+end
+@enduml

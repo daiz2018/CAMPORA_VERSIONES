@@ -1,0 +1,33 @@
+@startuml secuencia-proceso-clave
+title Proceso clave: sincronización diferida de ofertas (Offline-First)
+skinparam sequenceMessageAlign center
+
+actor "Productor (PWA)" as P
+participant "IndexedDB local" as DB
+participant "Service Worker" as SW
+participant "API Gateway" as GW
+participant "OfferComponent" as OFF
+database "PostgreSQL" as PG
+
+== Sin cobertura (offline) ==
+P -> DB : 1. Crear oferta (estado PENDIENTE_SINCRONIZACION)
+DB --> P : Confirmación de guardado local (< 200 ms)
+
+== Se restablece la red (3G/4G) ==
+SW -> DB : 2. Detecta conexión y lee cola local
+SW -> GW : 3. POST /api/v1/offers/sync (Bearer JWT, lote)
+
+alt Token válido
+  GW -> OFF : 4. syncOfflineOffers(batch)
+  OFF -> PG : Verifica duplicados y marca de tiempo (First-Write-Wins)
+  OFF -> PG : Persiste ofertas
+  OFF --> GW : SyncResultDTO (successCount, errors)
+  GW --> SW : 200 OK (globalOfferId, PENDING_MATCHING)
+  SW -> DB : Marca ofertas como sincronizadas
+  SW --> P : 5. Notificación "Oferta sincronizada"
+else Token expirado
+  GW --> SW : 401 AUTH_TOKEN_EXPIRED
+  SW -> DB : Conserva la cola intacta
+  SW --> P : Solicita iniciar sesión de nuevo
+end
+@enduml

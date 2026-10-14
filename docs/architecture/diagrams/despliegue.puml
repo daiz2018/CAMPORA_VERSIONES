@@ -1,0 +1,26 @@
+@startuml despliegue
+!include <C4/C4_Deployment>
+LAYOUT_WITH_LEGEND()
+title Vista de despliegue - CAMPORA (Low OPEX, PaaS)
+
+Deployment_Node(cliente, "Dispositivo móvil", "Android 8.0+, 2 GB RAM") {
+  Container(pwa, "PWA", "Service Worker + IndexedDB", "Cliente offline-first")
+}
+Deployment_Node(borde, "Cloudflare", "CDN y WAF, TLS 1.3") {
+  Container(waf, "WAF / CDN", "Cloudflare", "Filtrado y cifrado en tránsito")
+}
+Deployment_Node(paas, "PaaS (contenedores Docker)", "Autoescalado, scale-to-zero") {
+  Container(gateway, "API Gateway", "Node.js", "JWT, rate limiting")
+  Container(core, "Core Microservices", "Docker", "Dominios de negocio")
+}
+Deployment_Node(datos, "Capa de datos", "Servicios gestionados") {
+  ContainerDb(pg, "PostgreSQL", "SQL", "Datos transaccionales y auditoría (AES-256 en reposo)")
+  ContainerDb(redis, "Redis", "RESP", "Caché y cola de eventos")
+}
+
+Rel(pwa, waf, "HTTPS")
+Rel(waf, gateway, "HTTPS")
+Rel(gateway, core, "HTTP interno")
+Rel(core, pg, "SQL")
+Rel(core, redis, "RESP")
+@enduml
