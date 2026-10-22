@@ -1,0 +1,50 @@
+
+@startuml CAMPORA_Clean
+title CAMPORA - Clean Architecture
+top to bottom direction
+skinparam componentStyle rectangle
+
+package "Frameworks e infraestructura" {
+  [PWA CAMPORA] as PWA
+  [PostgreSQL] as PG
+  [Redis] as REDIS
+  [Pasarela de pagos] as PAGOS
+}
+
+package "Adaptadores de interfaz" {
+  [Controladores REST] as REST
+  [Repositorios SQL] as REPO
+  [Adaptador de pagos] as ADAP
+}
+
+package "Casos de uso" {
+  [Publicar oferta] as OFERTA
+  [Gestionar pedido] as PEDIDO
+  [Buscar productos] as BUSCAR
+  [Sincronizar ofertas offline] as SYNC
+}
+
+package "Entidades de negocio" {
+  [Productor] as PRODUCTOR
+  [Producto] as PRODUCTO
+  [Oferta] as ENT_OFERTA
+  [Pedido] as ENT_PEDIDO
+}
+
+PWA --> REST
+REST --> OFERTA
+REST --> PEDIDO
+REST --> BUSCAR
+REST --> SYNC
+
+OFERTA --> ENT_OFERTA
+OFERTA --> PRODUCTOR
+PEDIDO --> ENT_PEDIDO
+BUSCAR --> PRODUCTO
+SYNC --> ENT_OFERTA
+
+REPO --> PG
+ADAP --> PAGOS
+REPO --> REDIS
+
+

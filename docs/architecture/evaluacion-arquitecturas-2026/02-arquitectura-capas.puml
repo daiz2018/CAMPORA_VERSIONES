@@ -1,0 +1,47 @@
+
+@startuml CAMPORA_Capas
+title CAMPORA - Arquitectura en capas
+top to bottom direction
+
+skinparam componentStyle rectangle
+
+package "1. Presentación" {
+  [PWA CAMPORA] as PWA
+}
+
+package "2. Aplicación" {
+  [Autenticación] as AUTH
+  [Gestión de ofertas] as OFERTAS
+  [Gestión de pedidos] as PEDIDOS
+  [Búsqueda de productos] as BUSQUEDA
+}
+
+package "3. Negocio" {
+  [Reglas comerciales] as REGLAS
+  [Control de inventario] as INVENTARIO
+  [Validación de insumos] as ICA
+}
+
+package "4. Datos e integraciones" {
+  database "PostgreSQL" as PG
+  database "Redis" as REDIS
+  [Pasarelas de pago] as PAGOS
+}
+
+PWA --> AUTH
+PWA --> OFERTAS
+PWA --> PEDIDOS
+PWA --> BUSQUEDA
+
+AUTH --> REGLAS
+OFERTAS --> INVENTARIO
+PEDIDOS --> REGLAS
+BUSQUEDA --> REGLAS
+
+REGLAS --> PG
+INVENTARIO --> PG
+ICA --> PG
+BUSQUEDA --> REDIS
+PEDIDOS --> PAGOS
+
+@enduml
